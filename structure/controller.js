@@ -247,6 +247,14 @@ class CarController {
             numb += 1;
         }
 
+        // deljenje kanvasa po redovima
+        for (let i = 0; i <= caller.lineHeight; i+=part){
+            context.beginPath();
+            context.moveTo(0, caller.lineHeight-i + canvasHeightBefore);
+            context.lineTo(canvasWidth, caller.lineHeight-i + canvasHeightBefore);
+            context.stroke();
+        }
+
     }
 
 
