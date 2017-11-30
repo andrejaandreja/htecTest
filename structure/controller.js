@@ -261,6 +261,7 @@ class CarController {
 
         // poziv funckija za iscrtavanje znakova i semafora
         this.renderTrafficSign(caller, context);
+        this.renderTrafficLight(caller, context);
 
     }
 
@@ -289,6 +290,79 @@ class CarController {
             context.lineTo(position, center - 50);
             context.stroke();
             context.setLineDash([0]);
+        }
+    }
+
+
+    // metoda za iscrtavanje semafora
+    renderTrafficLight(caller, context){
+        let center = caller.canvasHeight - caller.canvasHeightBefore;
+        const trafficLight = [{color: "red", position: -25}, {color: "green", position: 10}];
+        caller.trafficLights = caller.data["traffic_lights"];
+
+        // postavljanje svih semafora
+        for (let i = 0; i < caller.data["traffic_lights"].length; i++) {
+            let position = +caller.data["traffic_lights"][i]["position"]/caller.onePix;
+
+            //crtanje semafora
+            context.beginPath();
+            context.moveTo(position - 20, center - 50);
+            context.lineTo(position + 20, center - 50);
+            context.moveTo(position - 20, center + 50);
+            context.lineTo(position + 20, center + 50);
+            context.moveTo(position - 20, center - 50);
+            context.lineTo(position - 20, center + 50);
+            context.moveTo(position + 20, center - 50);
+            context.lineTo(position + 20, center + 50);
+            context.stroke();
+
+            // iscrtavanje kruga
+            context.beginPath();
+            context.arc(position, center - 25, 15, 0, 2*Math.PI);
+            context.fillStyle = "red";
+            context.fill();
+            context.stroke();
+
+            context.beginPath();
+            context.arc(position, center + 10, 15, 0, 2*Math.PI);
+            context.stroke();
+
+            // iscrtavanje isprekidane linije
+            context.beginPath();
+            context.setLineDash([5]);
+            context.moveTo(position, caller.canvasHeightBefore);
+            context.lineTo(position, center - 50);
+            context.stroke();
+            context.setLineDash([0]);
+
+            let light = 1;
+            setInterval( function() {
+                let secondLight = trafficLight.length - 1 - light;
+
+                // postavljanje pocetnog stanja semafora
+                caller.data["traffic_lights"][i]["state"] = false;
+                if(light == 1){
+                    // ukoliko je light 1 onda se postavlja zeleno svetlo
+                    caller.data["traffic_lights"][i]["state"] = true;
+                }
+
+                // postavljanje bele boje suprotnom
+                context.beginPath();
+                context.arc(position, center + trafficLight[secondLight].position, 15, 0, 2*Math.PI);
+                context.fillStyle = "white";
+                context.fill();
+                context.stroke();
+
+                // postavljanje crvene/zelene boje suprotnom
+                context.beginPath();
+                context.arc(position, center + trafficLight[light].position, 15, 0, 2*Math.PI);
+                context.fillStyle = trafficLight[light].color;
+                context.fill();
+                context.stroke();
+
+                // light promenljiva postaje druga vrednost semafora
+                light = secondLight;
+            }, caller.data["traffic_lights"][i]["duration"]);
         }
     }
 
