@@ -148,7 +148,7 @@ class CarController {
                 divRow = document.createElement("div");
             }
             colNumber++;
-
+            caller.carWidth = 80;
 
             // dodeljivanje event-a za pripremanje automobila za trku
             divFirst.onclick = function(){
@@ -157,7 +157,7 @@ class CarController {
                 // provera da li je automobil vec dodat i da li je postavljeno vise od tri automobila
                 if(caller.raceNumb < 3 && id.length == 0) {
                     caller.readyCars.push(data[i]);
-                    caller.readyCars[caller.raceNumb]["x"] = 80;
+                    caller.readyCars[caller.raceNumb]["x"] = caller.carWidth;
 
                     // kreiranje slike
                     let image = new Image();
@@ -445,7 +445,7 @@ class CarController {
         const imageY = (4 * i + 1) * (caller.canvasHeight - caller.canvasHeightAfter - caller.canvasHeightBefore) / 12 + caller.canvasHeightBefore;
 
         // brisanje samo u slucaju kada nisu ispunjeni sledeci uslovi
-        let part = caller.parts.filter(function(y) { return y/caller.onePix == x-80})[0];
+        let part = caller.parts.filter(function(y) { return y/caller.onePix == x - caller.carWidth})[0];
         if(part != undefined){
             caller.context.beginPath();
             caller.context.moveTo(part/caller.onePix, caller.canvasHeightBefore);
@@ -454,7 +454,7 @@ class CarController {
         }
 
         // ponovno iscrtavanje linija semafora, jer su prethodno obrisani pomeranjem automobila
-        let lights = caller.data["traffic_lights"].filter(function(y) { return y["position"]/caller.onePix == x-80})[0];
+        let lights = caller.data["traffic_lights"].filter(function(y) { return y["position"]/caller.onePix == x - caller.carWidth})[0];
         if(lights != undefined){
             let position = lights["position"]/caller.onePix;
             let center = caller.canvasHeight - caller.canvasHeightBefore;
@@ -469,7 +469,7 @@ class CarController {
         }
 
         // ponovno iscrtavanje linija znaka, jer su prethodno obrisani pomeranjem automobila
-        let signs = caller.data["speed_limits"].filter(function(y) { return y["position"]/caller.onePix == x-80})[0];
+        let signs = caller.data["speed_limits"].filter(function(y) { return y["position"]/caller.onePix == x - caller.carWidth})[0];
         if(signs != undefined){
             let position = signs["position"]/caller.onePix;
             let center = caller.canvasHeight - caller.canvasHeightBefore;
@@ -500,7 +500,7 @@ class CarController {
         caller.context.restore();
 
         // proverava da li su dosli do kraja
-        if(x == caller.canvasWidth + 80) {
+        if(x == caller.canvasWidth + caller.carWidth) {
             let sticky = new Image();
             let stickyWidth = 92;
             let stickyHeight = 84;
@@ -569,7 +569,7 @@ class CarController {
         caller.readyCars[i]["x"] += 1;
 
         // ponovno iscrtavanje automobila sa novom koordinatom
-        if(caller.readyCars[i]["x"] <= caller.canvasWidth + 80) {
+        if(caller.readyCars[i]["x"] <= caller.canvasWidth + caller.carWidth) {
             caller.draw(caller, i, image);
 
             // uzimanje znaka na koji je vozilo naislo
