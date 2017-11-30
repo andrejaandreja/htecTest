@@ -255,6 +255,41 @@ class CarController {
             context.stroke();
         }
 
+
+        // postavljanje vrednosti jednog piksela
+        caller.onePix = +caller.data["distance"] / caller.canvasWidth;
+
+        // poziv funckija za iscrtavanje znakova i semafora
+        this.renderTrafficSign(caller, context);
+
+    }
+
+
+    // metoda za iscrtavanje znakova
+    renderTrafficSign(caller, context){
+        let center = caller.canvasHeight - caller.canvasHeightBefore;
+        // postavljanje svih znakova
+        for (let i = 0; i < caller.data["speed_limits"].length; i++){
+            let position = +caller.data["speed_limits"][i]["position"]/caller.onePix;
+
+            // iscrtavanje kruga
+            context.beginPath();
+            context.arc(position, center, 50, 0, 2*Math.PI);
+            context.arc(position, center, 40, 0, 2*Math.PI);
+            context.stroke();
+
+            // iscrtavanje teksta
+            context.font = "60px Georgia";
+            context.fillText(caller.data["speed_limits"][i]["speed"], position - 35, center + 20);
+
+            // iscrtavanje isprekidane linije
+            context.beginPath();
+            context.setLineDash([5]);
+            context.moveTo(position, caller.canvasHeightBefore);
+            context.lineTo(position, center - 50);
+            context.stroke();
+            context.setLineDash([0]);
+        }
     }
 
 
