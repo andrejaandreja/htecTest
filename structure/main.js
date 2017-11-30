@@ -5,3 +5,6 @@ window.onload = function() {
     const mainDiv = document.getElementById('main-div');
     const dispatcher = new Dispatcher(mainDiv);
 }
+
+
+// airbnb style guide
