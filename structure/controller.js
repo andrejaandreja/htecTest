@@ -38,8 +38,10 @@ class CarController {
         rowDiv.appendChild(carsSearchDiv);
         rowDiv.appendChild(carsDiv);
 
+        // poziv funkcija za iscrtavanje automobila, polja pretrage i kanvasa
         caller.renderCars(caller, carsDiv, data["cars"]);
         caller.renderCarsSearch(caller, carsSearchDiv, carsDiv);
+        caller.prepareCanvasDivs(caller, caller.mainDiv, data);
     }
 
     // metoda za iscrtavanje galerija automobila
@@ -165,4 +167,87 @@ class CarController {
         // povezivanje kontrola
         carsSearchDiv.appendChild(input);
     }
+
+    // metoda za iscrtavanje okvira canvas divova ostalih child komponenata
+    prepareCanvasDivs(caller, mainDiv, data){
+        // kreiranje divova
+        const containerDiv = document.createElement("div");
+        const rowDiv = document.createElement("div");
+        const canvasDiv = document.createElement("div");
+        const raceDiv = document.createElement("div");
+
+        // dodeljivanje atributa
+        containerDiv.className = "container";
+        rowDiv.className = "row";
+        canvasDiv.className = "canvas-wrapper";
+        raceDiv.className = "race-div";
+
+        // povezivanje kontrola
+        mainDiv.appendChild(containerDiv);
+        containerDiv.appendChild(rowDiv);
+        rowDiv.appendChild(canvasDiv);
+        canvasDiv.appendChild(raceDiv);
+
+        this.renderCanvasDiv(caller, raceDiv, data);
+    }
+
+    // metoda za iscrtavanje kanvasa
+    renderCanvasDiv(caller, raceDiv, data) {
+        const distance = data["distance"];
+
+        // kreiranje kanvasa
+        const canvas = document.createElement('canvas');
+        let context = canvas.getContext('2d');
+
+        caller.canvas = canvas;
+        caller.context = context;
+
+        // postsavljanje atributa
+        const canvasHeight = 600;
+        const canvasWidth = 1000;
+        canvas.setAttribute('width', canvasWidth);
+        canvas.setAttribute('height', canvasHeight);
+        canvas.className = "canvas";
+
+        // dodeljivanje vrednosti pre i posle kanvasa, za header deo sa vrednostima na skali, kao i footer deo za znakove i semafor
+        const canvasHeightBefore = 100;
+        const canvasHeightAfter = 200;
+
+        // vezivanje vrednosti za objekat, kako bi bile pozvane u drugoj metodi
+        caller.canvasHeight = canvasHeight;
+        caller.canvasWidth = canvasWidth;
+        caller.canvasHeightBefore = canvasHeightBefore;
+        caller.canvasHeightAfter = canvasHeightAfter;
+
+        // dodavanje kanvasa u raceDiv
+        raceDiv.appendChild(canvas);
+        caller.partNumb = 10;
+        const part = canvasWidth / caller.partNumb;
+        caller.lineHeight = 300;
+        let numb = 0;
+        caller.parts = [];
+
+        // deljenje kanvasa po kolonama
+        for (let i = 0; i <= canvasWidth; i+= part){
+            let distancePart = distance * i / canvasWidth;
+
+            // pamcenje pozicija delova, kako bi se kasnije izbeglo njihovo brisanje
+            caller.parts.push(distancePart);
+
+            context.beginPath();
+            context.moveTo(i, canvasHeightBefore);
+            context.lineTo(i, caller.lineHeight + canvasHeightBefore);
+            context.stroke();
+
+            // iscrtavanje teksta
+            context.font = "20px Georgia";
+            if(numb > 0 && numb < caller.partNumb) {
+                context.fillText(distancePart, i - 7, 75);
+            }
+            numb += 1;
+        }
+
+    }
+
+
 }
