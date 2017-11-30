@@ -8,7 +8,6 @@ class Dispatcher {
     }
 }
 
-
 /**
  * zaduzen za iscrtavanje galerije automobila kao i dodeljivanje funkcionalnosti
  */
@@ -16,9 +15,16 @@ class CarController {
     // deklarisanje potrebnih vrednosti i poziv funkcija za iscrtavanje kontrola
     constructor(mainDiv, jsonService) {
         this.mainDiv = mainDiv;
+        this.readyCars = [];
+        this.raceNumb = 0;
+        this.added = [];
         jsonService.getData(this, "json/data.json", null, this.prepareCarDivs);
+
+        // postavljanje poruke za ispisivanje obavestenja
+        this.textMsg = document.getElementById('msg');
     }
 
+    // metoda za kreiranje divova omotaca, kao i za poziv ostalih funkcija za iscrtavanje automobila, polja pretrage i kanvasa
     prepareCarDivs(caller, data){
         caller.data = data;
         // kreiranje divova
@@ -142,6 +148,33 @@ class CarController {
                 divRow = document.createElement("div");
             }
             colNumber++;
+
+
+            // dodeljivanje event-a za pripremanje automobila za trku
+            divFirst.onclick = function(){
+                let id = caller.added.filter(function (x){ return x == data[i]["id"]; });
+
+                // provera da li je automobil vec dodat i da li je postavljeno vise od tri automobila
+                if(caller.raceNumb < 3 && id.length == 0) {
+                    caller.readyCars.push(data[i]);
+                    caller.readyCars[caller.raceNumb]["x"] = 80;
+
+                    // kreiranje slike
+                    let image = new Image();
+                    image.src = data[i]["image"];
+
+                    // poziv metode za iscrtavanje automobila
+                    caller.draw(caller, caller.raceNumb, image);
+
+                    caller.added.push(data[i]["id"]);
+                    caller.raceNumb += 1;
+                } else {
+                    caller.textMsg.innerHTML = caller.raceNumb >= 3 ? "The race is ready to start!" : "Already added!";
+
+                    // poziv funkcije za ispis poruke
+                    caller.showMessage();
+                }
+            }
         }
     }
 
@@ -175,18 +208,62 @@ class CarController {
         const rowDiv = document.createElement("div");
         const canvasDiv = document.createElement("div");
         const raceDiv = document.createElement("div");
+        const controlsDiv = document.createElement("div");
+        const input = document.createElement("input");
+        const button = document.createElement("button");
+        const label = document.createElement("label");
 
         // dodeljivanje atributa
         containerDiv.className = "container";
         rowDiv.className = "row";
         canvasDiv.className = "canvas-wrapper";
         raceDiv.className = "race-div";
+        controlsDiv.className = "col-md-6 pull-right";
+        button.className = "btn btn-primary col-md-4 pull-right";
+        button.innerHTML = "Start";
+        input.className = "animation-speed col-md-7";
+        input.placeholder = "Brzina animacije";
+        label.className = "animation-speed-err col-md-12";
 
         // povezivanje kontrola
         mainDiv.appendChild(containerDiv);
         containerDiv.appendChild(rowDiv);
         rowDiv.appendChild(canvasDiv);
         canvasDiv.appendChild(raceDiv);
+        rowDiv.appendChild(controlsDiv);
+        controlsDiv.appendChild(input);
+        controlsDiv.appendChild(button);
+        controlsDiv.appendChild(label);
+
+        let validation = true;
+        // regex za brojeve
+        var reg = /^\d+$/;
+        // postavljanje validacije input polju
+        input.onkeyup = function() {
+            if(!reg.test(input.value) && input.value != "" || input.value == 0){
+                label.innerHTML = "Animation speed can contains only numbers!";
+                validation = false;
+                input.value = "";
+            }else{
+                validation = true;
+                label.innerHTML = "";
+            }
+        }
+
+        // postavljanje funkcije dugmetu "Start"
+        button.onclick = function() {
+            if(input.value == "" || validation == false) {
+                caller.textMsg.innerHTML = "Animation speed input is required!";
+                caller.showMessage();
+            } else if(caller.readyCars.length < 3){
+                caller.textMsg.innerHTML = "Please prepare cars for race!";
+                caller.showMessage();
+            }
+            else{
+                caller.speedAnimation = input.value;
+                caller.startRace(caller, input.value);
+            }
+        }
 
         this.renderCanvasDiv(caller, raceDiv, data);
     }
@@ -255,16 +332,13 @@ class CarController {
             context.stroke();
         }
 
-
         // postavljanje vrednosti jednog piksela
         caller.onePix = +caller.data["distance"] / caller.canvasWidth;
 
         // poziv funckija za iscrtavanje znakova i semafora
         this.renderTrafficSign(caller, context);
         this.renderTrafficLight(caller, context);
-
     }
-
 
     // metoda za iscrtavanje znakova
     renderTrafficSign(caller, context){
@@ -292,7 +366,6 @@ class CarController {
             context.setLineDash([0]);
         }
     }
-
 
     // metoda za iscrtavanje semafora
     renderTrafficLight(caller, context){
@@ -366,5 +439,200 @@ class CarController {
         }
     }
 
+    // metoda za iscrtavanje automobila u okviru kanvasa
+    draw(caller, i, image) {
+        let x = caller.readyCars[i]["x"]
+        const imageY = (4 * i + 1) * (caller.canvasHeight - caller.canvasHeightAfter - caller.canvasHeightBefore) / 12 + caller.canvasHeightBefore;
+
+        // brisanje samo u slucaju kada nisu ispunjeni sledeci uslovi
+        let part = caller.parts.filter(function(y) { return y/caller.onePix == x-80})[0];
+        if(part != undefined){
+            caller.context.beginPath();
+            caller.context.moveTo(part/caller.onePix, caller.canvasHeightBefore);
+            caller.context.lineTo(part/caller.onePix, caller.lineHeight + caller.canvasHeightBefore);
+            caller.context.stroke();
+        }
+
+        // ponovno iscrtavanje linija semafora, jer su prethodno obrisani pomeranjem automobila
+        let lights = caller.data["traffic_lights"].filter(function(y) { return y["position"]/caller.onePix == x-80})[0];
+        if(lights != undefined){
+            let position = lights["position"]/caller.onePix;
+            let center = caller.canvasHeight - caller.canvasHeightBefore;
+
+            // iscrtavanje isprekidane linije
+            caller.context.beginPath();
+            caller.context.setLineDash([5]);
+            caller.context.moveTo(position, caller.canvasHeightBefore);
+            caller.context.lineTo(position, center - 50);
+            caller.context.stroke();
+            caller.context.setLineDash([0]);
+        }
+
+        // ponovno iscrtavanje linija znaka, jer su prethodno obrisani pomeranjem automobila
+        let signs = caller.data["speed_limits"].filter(function(y) { return y["position"]/caller.onePix == x-80})[0];
+        if(signs != undefined){
+            let position = signs["position"]/caller.onePix;
+            let center = caller.canvasHeight - caller.canvasHeightBefore;
+
+            // iscrtavanje isprekidane linije
+            caller.context.beginPath();
+            caller.context.setLineDash([5]);
+            caller.context.moveTo(position, caller.canvasHeightBefore);
+            caller.context.lineTo(position, center - 50);
+            caller.context.stroke();
+            caller.context.setLineDash([0]);
+        }
+
+        let imageWidth = 75;
+        let imageHeight = 70;
+
+        caller.context.setTransform(1, 0, 0, 1, 0, 0);
+        if(x > 1){
+            caller.context.clearRect(x-1, imageY, 1, imageHeight);
+            caller.context.save();
+        }
+        // pomeranje
+        caller.context.translate(x, 0);
+        caller.context.scale(-1,1);
+
+        // iscrtavanje slike
+        caller.context.drawImage(image, 0, imageY, imageWidth, imageHeight);
+        caller.context.restore();
+
+        // proverava da li su dosli do kraja
+        if(x == caller.canvasWidth - 1) {
+            let sticky = new Image();
+            let stickyWidth = 92;
+            let stickyHeight = 84;
+            let stickyPosition = imageY - 14;
+            let stickyY = caller.canvasWidth - 95;
+
+            // ukoliko jesu, proverava ko je zavrsio trku i u zavisnosti od dodeljene pozicije se zna da li dobija zlatnu, srebrnu ili bronzanu
+            let numb = caller.readyCars.filter(function (y) {
+                return y["position"] == undefined;
+            }).length;
+            if (numb == 3) {
+                caller.readyCars[i]["position"] = 1;
+                sticky.src = "images/gold-medal.jpg";
+                sticky.onload = function() {
+                    caller.context.drawImage(sticky, stickyY, stickyPosition, stickyWidth, stickyHeight);
+                };
+            } else if (numb == 2) {
+                caller.readyCars[i]["position"] = 2;
+                sticky.src = "images/silver-medal.jpg";
+                sticky.onload = function() {
+                    caller.context.drawImage(sticky, stickyY, stickyPosition, stickyWidth, stickyHeight);
+                };
+            } else if (numb == 1) {
+                caller.readyCars[i]["position"] = 3;
+                sticky.src = "images/bronze-medal.jpg";
+                sticky.onload = function() {
+                    caller.context.drawImage(sticky, stickyY, stickyPosition, stickyWidth, stickyHeight);
+                };
+            }
+        }
+
+
+
+    }
+
+    startRace(caller, speedAnimation) {
+        caller.intervals = [];
+
+        // prolazimo kroz niz dodatih automobila i postavljamo im funkcije za ponovno iscrtavanje i pomeranje
+        for (let i = 0; i< caller.readyCars.length; i++){
+            let speed = caller.readyCars[i]["speed"] * speedAnimation;
+            /**
+             * uzimamo distancu i delimo njom duzinu puta, kako bi izracunali koliko kilometara predstavlja 1px
+             * a zatim delimo sa brzinom kojom se krece vozilo kako bi dobili vrednost u satima, a zatim mnozimo
+             * sa 60 (minuta) i 60 (sekundi), kao i 1000 (ms), cime smo dobili vrednost u milisekundama
+             * Math.round funkcija iskoriscena kako bi se zaokruzile vrednosti
+             */
+            let intervalRace = Math.round(caller.onePix/speed * 3600 * 1000);
+
+            // kreiranje slike
+            let image = new Image();
+            image.src = caller.readyCars[i]["image"];
+
+            // poziv metode setInterval koja izvrsava funkciju na svakih n (interval) milisekundi
+            image.onload = function() {
+                caller.intervals[i] = setInterval(function () {
+                    caller.race(caller, i, image, speedAnimation, intervalRace);
+                }, intervalRace);
+            }
+        }
+    }
+
+    // metoda koju pozivaju automobili tokom kretanja kroz kanvas
+    race(caller, i, image, speedAnimation, intervalRace, intervalSL) {
+        // povecavanje x koordinate za 1px
+        caller.readyCars[i]["x"] += 1;
+
+        // ponovno iscrtavanje automobila sa novom koordinatom
+        if(caller.readyCars[i]["x"] < caller.canvasWidth) {
+            caller.draw(caller, i, image);
+
+            // uzimanje znaka na koji je vozilo naislo
+            let speedLimit = caller.data["speed_limits"].filter(function(x){return x.position == caller.readyCars[i]["x"] * caller.onePix});
+
+            // uzimanje semafora na koji je vozilo naislo
+            let trafficLight = caller.data["traffic_lights"].filter(function(x){return x.position == caller.readyCars[i]["x"] * caller.onePix});
+
+            // provera da li se na trenutnoj poziciji nalazi znak
+            if(speedLimit.length > 0){
+                // ukoliko se na toj poziciji nalazi znak, zaustavlja kretanje automobila sa trenutnom brzinom
+                clearInterval(caller.intervals[i]);
+
+                // izracunavanje brzine i intervala
+                let speed = speedLimit[0]["speed"] * speedAnimation;
+                intervalSL = Math.round(caller.onePix/speed * 3600 * 1000);
+                // i ogranicava brzinu vozila u zavisnosti od znaka
+                caller.intervals[i] = setInterval(function() {
+                    caller.race(caller, i, image, speedAnimation, intervalRace, intervalSL);
+                }, intervalSL);
+            }
+
+            // provera da li se na trenutnoj poziciji nalazi semafor caller.data["traffic_lights"][i]["state"]
+            if (trafficLight.length > 0 && !trafficLight[0]["state"]){
+                clearInterval(caller.intervals[i]);
+
+                // proverava da li da prosledi interval od trke ili interval koji je nastao nakon znaka
+                if(intervalSL == undefined){
+
+                    // ukoliko se na toj poziciji nalazi semafor, zaustavlja vozilo i zadaje mu funkciju da izvrsava proveru na svakih 500 ms
+                    let trafficInterval = setTimeout(function() {
+                        caller.raceLight(caller, i, image, trafficLight, speedAnimation, intervalRace)
+                    },500);
+                }else{
+
+                    // ukoliko se na toj poziciji nalazi semafor, zaustavlja vozilo i zadaje mu funkciju da izvrsava proveru na svakih 500 ms
+                    let trafficInterval = setTimeout(function() {
+                        caller.raceLight(caller, i, image, trafficLight, speedAnimation, intervalSL)
+                    },500);
+                }
+            }
+
+        }
+    }
+
+    raceLight(caller, i, image, trafficLight, speedAnimation, intervalLight){
+        if(trafficLight[0]["state"]){
+            caller.intervals[i] = setInterval(function() {
+                caller.race(caller, i, image, speedAnimation, intervalLight);
+            }, intervalLight);
+        }else{
+            setTimeout(function() {
+                caller.raceLight(caller, i, image, trafficLight, speedAnimation, intervalLight)
+            },500);
+        }
+    }
+
+    showMessage(){
+        // jquery metoda za prikaz poruke
+        $('.modal-for-details')
+            .slideDown('slow')
+            .delay(1500)
+            .slideUp('slow');
+    }
 
 }
