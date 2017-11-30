@@ -500,7 +500,7 @@ class CarController {
         caller.context.restore();
 
         // proverava da li su dosli do kraja
-        if(x == caller.canvasWidth - 1) {
+        if(x == caller.canvasWidth + 80) {
             let sticky = new Image();
             let stickyWidth = 92;
             let stickyHeight = 84;
@@ -569,7 +569,7 @@ class CarController {
         caller.readyCars[i]["x"] += 1;
 
         // ponovno iscrtavanje automobila sa novom koordinatom
-        if(caller.readyCars[i]["x"] < caller.canvasWidth) {
+        if(caller.readyCars[i]["x"] <= caller.canvasWidth + 80) {
             caller.draw(caller, i, image);
 
             // uzimanje znaka na koji je vozilo naislo
