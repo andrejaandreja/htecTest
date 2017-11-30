@@ -1,0 +1,56 @@
+{
+  "distance": 50,
+  "cars": [
+    {
+      "image": "images/fiat-punto.jpg",
+      "speed": 148,
+      "description": "The Fiat Punto is a supermini car produced by the Italian manufacturer Fiat since 1993.",
+      "name": "Fiat Punto",
+      "id": 1
+    },
+    {
+      "image": "images/mazda-3.jpg",
+      "speed": 235,
+      "description": "The Fiat Punto is a supermini car produced by the Italian manufacturer Mazda since 1993.",
+      "name": "Mazda 3",
+      "id": 2
+    },
+    {
+      "image": "images/mercedes-cla.jpg",
+      "speed": 280,
+      "description": "The Mercedes Benz CLA is a supermini car produced by the Italian manufacturer Mercedes since 1993.",
+      "name": "Mercedes Benz CLA",
+      "id": 3
+    },
+    {
+      "image": "images/honda-civic.jpg",
+      "speed": 177,
+      "description": "The Honda Civic is a supermini car produced by the Italian manufacturer Honda since 1993.",
+      "name": "Honda Civic",
+      "id": 4
+    },
+    {
+      "image": "images/smart-fortwo.jpg",
+      "speed": 102,
+      "description": "The Smart is a supermini car produced by the Italian manufacturer Mercedes since 1993.",
+      "name": "Smart",
+      "id": 5
+    }
+  ],
+  "speed_limits": [
+    {
+      "position": 22,
+      "speed": 60
+    },
+    {
+      "position": 45,
+      "speed": 80
+    }
+  ],
+  "traffic_lights": [
+    {
+      "position": 28,
+      "duration": 3000
+    }
+  ]
+}
